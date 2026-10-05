@@ -1053,7 +1053,11 @@ registroForm.addEventListener('submit', async (e) => {
   const direccion = document.getElementById('f-direccion').value.trim();
   const ciudad = document.getElementById('f-ciudad').value;
   const nacimiento = document.getElementById('f-nacimiento').value;
-  const interes = Array.from(document.querySelectorAll('input[name="interes"]:checked')).map(i => i.value);
+  
+  // Convertimos el array de checkboxes seleccionados a un texto separado por comas
+  const interesArray = Array.from(document.querySelectorAll('input[name="interes"]:checked')).map(i => i.value);
+  const interes = interesArray.join(', ');
+
   const contacto = document.querySelector('input[name="contacto"]:checked');
   const terminos = document.getElementById('f-terminos').checked;
 
@@ -1062,7 +1066,7 @@ registroForm.addEventListener('submit', async (e) => {
   let valido = true;
   if (!nombre || !correo || !telefono || !direccion || !ciudad || !nacimiento || !contacto || !terminos) valido = false;
   if (!emailRegex.test(correo)) valido = false;
-  if (interes.length === 0) valido = false;
+  if (interesArray.length === 0) valido = false;
 
   if (!valido){
     formError.style.display = 'block';
@@ -1075,6 +1079,7 @@ registroForm.addEventListener('submit', async (e) => {
   submitBtn.disabled = true;
   submitBtn.textContent = 'Enviando...';
 
+  // Objeto JSON con los nombres exactos de las propiedades
   const solicitud = { 
     nombre, 
     correo, 
@@ -1092,7 +1097,7 @@ registroForm.addEventListener('submit', async (e) => {
       method: 'POST',
       mode: 'no-cors',
       headers: {
-        'Content-Type': 'application/json'
+        'Content-Type': 'text/plain;charset=utf-8'
       },
       body: JSON.stringify(solicitud)
     });
