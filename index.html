@@ -795,6 +795,9 @@
 <script>
 const LEAF = '<svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor" style="display:block"><path d="M12 2C7 2 3 6 3 12c0 5 4 9 9 10 0-6 1-10 5-14 1.5-1.5 3-2.5 4-3-3-2-6-3-9-3z"/></svg>';
 
+// URL del Webhook de Google Apps Script
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz7yDyEF68D9gwJffEQemmsyt53HJpKIk3CT3g6-moFJ1fzrkLmYYajLwZUH40eo-kt7g/exec';
+
 // datos originales + añadimos coordenadas aproximadas (lat, lng) para simular GPS
 const restaurants = [
   { name: "Green Lovers", address: "Calle 28", rating: 4.4, reviews: 599, price: 2, phone: "70202000", quote: "Comida vegetariana y vegana muy recomendada, con planes semanales y mensuales de comidas.", maps: "https://www.google.com/maps/place/?q=place_id:ChIJQUKoMPHn8ZMR9L_DFWNERic", hours: [ [7,0,22,0], [7,0,22,0], [7,0,22,0], [7,30,22,0], [7,0,22,0], [7,0,18,0], null ], lat: -17.783, lng: -63.182 },
@@ -809,7 +812,7 @@ const restaurants = [
 
 const DAY_NAMES = ["domingo","lunes","martes","miércoles","jueves","viernes","sábado"];
 
-// ========== GPS SIMULADO (para demo fijamos coordenada en Santa Cruz) ==========
+// ========== GPS SIMULADO ==========
 let userLat = -17.783;   // centro aproximado
 let userLng = -63.182;
 let gpsReady = false;
@@ -819,20 +822,17 @@ function updateGpsStatus(text, isReady = false) {
   gpsReady = isReady;
 }
 
-// Simular obtención de GPS (en entorno real se usaría navigator.geolocation)
 function requestGps() {
   updateGpsStatus('Buscando GPS...', false);
-  // Simulamos respuesta exitosa con lat/lng fijos (dentro de Santa Cruz)
   setTimeout(() => {
     userLat = -17.783 + (Math.random() - 0.5) * 0.02;
     userLng = -63.182 + (Math.random() - 0.5) * 0.02;
     updateGpsStatus(`📍 ${userLat.toFixed(4)}, ${userLng.toFixed(4)}`, true);
     checkNearby();
-    render(); // refresca para mostrar filtro por distancia (opcional)
+    render();
   }, 600);
 }
 
-// distancia en km (fórmula del coseno)
 function distanceKm(lat1, lon1, lat2, lon2) {
   const R = 6371;
   const dLat = (lat2 - lat1) * Math.PI / 180;
@@ -850,7 +850,7 @@ function checkNearby() {
   }
   const near = restaurants.filter(r => {
     const d = distanceKm(userLat, userLng, r.lat, r.lng);
-    return d <= 3.0;   // 3 km
+    return d <= 3.0;
   });
   if (near.length === 0) {
     alertBox.style.display = 'none';
@@ -911,10 +911,9 @@ function applyFilters(){
     if (state.price === "2" && r.price !== 2) return false;
     if (state.price === "na" && r.price !== null) return false;
     if (state.openOnly && !isOpenNow(r)) return false;
-    // Filtro por presupuesto (simbolico: si price=2 asumimos ~40-70 Bs, si null asumimos variable)
     const budget = state.budget || 0;
     if (budget > 0) {
-      if (r.price === 2 && budget < 30) return false;  // si muy bajo no alcanza
+      if (r.price === 2 && budget < 30) return false;
       if (r.price === null && budget < 25) return false;
     }
     return true;
@@ -1011,14 +1010,10 @@ document.getElementById('gps-refresh').addEventListener('click', () => {
   requestGps();
 });
 
-// Iniciar GPS al cargar
 window.addEventListener('load', () => {
-  // intentar GPS real (simulado)
   requestGps();
-  // actualizar badge
 });
 
-// llamada inicial
 render();
 
 // ========== MODAL: SOLICITUD DE REGISTRO ==========
@@ -1049,7 +1044,7 @@ document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape' && modalOverlay.classList.contains('open')) cerrarModal();
 });
 
-registroForm.addEventListener('submit', (e) => {
+registroForm.addEventListener('submit', async (e) => {
   e.preventDefault();
 
   const nombre = document.getElementById('f-nombre').value.trim();
@@ -1075,13 +1070,44 @@ registroForm.addEventListener('submit', (e) => {
   }
   formError.style.display = 'none';
 
-  // Aquí se podría enviar la solicitud a un backend/API real.
-  const solicitud = { nombre, correo, telefono, direccion, ciudad, nacimiento, interes, contacto: contacto.value, comentario: document.getElementById('f-comentario').value.trim() };
-  console.log('Nueva solicitud de registro:', solicitud);
+  const submitBtn = registroForm.querySelector('.btn-submit');
+  const originalText = submitBtn.textContent;
+  submitBtn.disabled = true;
+  submitBtn.textContent = 'Enviando...';
 
-  registroForm.reset();
-  formView.style.display = 'none';
-  successView.style.display = 'block';
+  const solicitud = { 
+    nombre, 
+    correo, 
+    telefono, 
+    direccion, 
+    ciudad, 
+    nacimiento, 
+    interes, 
+    contacto: contacto.value, 
+    comentario: document.getElementById('f-comentario').value.trim() 
+  };
+
+  try {
+    await fetch(SCRIPT_URL, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(solicitud)
+    });
+
+    registroForm.reset();
+    formView.style.display = 'none';
+    successView.style.display = 'block';
+
+  } catch (error) {
+    console.error('Error al registrar:', error);
+    alert('Ocurrió un error al enviar la solicitud. Por favor intenta nuevamente.');
+  } finally {
+    submitBtn.disabled = false;
+    submitBtn.textContent = originalText;
+  }
 });
 </script>
 
