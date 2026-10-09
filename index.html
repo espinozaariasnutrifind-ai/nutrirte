@@ -1053,7 +1053,7 @@ registroForm.addEventListener('submit', async (e) => {
   const direccion = document.getElementById('f-direccion').value.trim();
   const ciudad = document.getElementById('f-ciudad').value;
   const nacimiento = document.getElementById('f-nacimiento').value;
-  
+
   const interesArray = Array.from(document.querySelectorAll('input[name="interes"]:checked')).map(i => i.value);
   const interes = interesArray.join(', ');
 
@@ -1078,26 +1078,26 @@ registroForm.addEventListener('submit', async (e) => {
   submitBtn.disabled = true;
   submitBtn.textContent = 'Enviando...';
 
-  const solicitud = { 
-    nombre, 
-    correo, 
-    telefono, 
-    direccion, 
-    ciudad, 
-    nacimiento, 
-    interes, 
-    contacto: contacto.value, 
-    comentario: document.getElementById('f-comentario').value.trim() 
-  };
+  // Usar URLSearchParams para asegurar el envio de parametros por POST
+  const formData = new URLSearchParams();
+  formData.append('nombre', nombre);
+  formData.append('correo', correo);
+  formData.append('telefono', telefono);
+  formData.append('direccion', direccion);
+  formData.append('ciudad', ciudad);
+  formData.append('nacimiento', nacimiento);
+  formData.append('interes', interes);
+  formData.append('contacto', contacto.value);
+  formData.append('comentario', document.getElementById('f-comentario').value.trim());
 
   try {
     await fetch(SCRIPT_URL, {
       method: 'POST',
       mode: 'no-cors',
       headers: {
-        'Content-Type': 'text/plain'
+        'Content-Type': 'application/x-www-form-urlencoded'
       },
-      body: JSON.stringify(solicitud)
+      body: formData.toString()
     });
 
     registroForm.reset();
