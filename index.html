@@ -1054,7 +1054,6 @@ registroForm.addEventListener('submit', async (e) => {
   const ciudad = document.getElementById('f-ciudad').value;
   const nacimiento = document.getElementById('f-nacimiento').value;
   
-  // Convertimos el array de checkboxes seleccionados a un texto separado por comas
   const interesArray = Array.from(document.querySelectorAll('input[name="interes"]:checked')).map(i => i.value);
   const interes = interesArray.join(', ');
 
@@ -1079,7 +1078,6 @@ registroForm.addEventListener('submit', async (e) => {
   submitBtn.disabled = true;
   submitBtn.textContent = 'Enviando...';
 
-  // Objeto JSON con los nombres exactos de las propiedades
   const solicitud = { 
     nombre, 
     correo, 
@@ -1097,7 +1095,7 @@ registroForm.addEventListener('submit', async (e) => {
       method: 'POST',
       mode: 'no-cors',
       headers: {
-        'Content-Type': 'text/plain;charset=utf-8'
+        'Content-Type': 'text/plain'
       },
       body: JSON.stringify(solicitud)
     });
