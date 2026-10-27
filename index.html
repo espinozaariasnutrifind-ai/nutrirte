@@ -614,6 +614,24 @@
     font-weight:500;
     cursor:pointer;
   }
+
+  /* ---------- politica de privacidad (footer) ---------- */
+  #privacidad{
+    text-align:left;
+    max-width:640px;
+    margin:22px auto 0;
+    padding-top:18px;
+    border-top:1px solid var(--line);
+    scroll-margin-top:20px;
+  }
+  #privacidad h3{
+    font-family:'Fraunces', serif;
+    font-weight:500;
+    font-size:1rem;
+    color:var(--cream);
+    margin:0 0 8px;
+  }
+  #privacidad p{ margin:0 0 8px; }
 </style>
 </head>
 <body>
@@ -689,6 +707,14 @@
 <footer class="wrap">
   Datos recopilados de reseñas públicas de Google Maps · Santa Cruz de la Sierra, Bolivia<br>
   Los horarios pueden cambiar — confirma por teléfono antes de ir.
+
+  <section id="privacidad">
+    <h3>Política de privacidad</h3>
+    <p><strong>Qué datos guardamos:</strong> nombre, correo, teléfono, dirección, ciudad, fecha de nacimiento, productos de interés, medio de contacto preferido, fecha deseada y el mensaje que escribas.</p>
+    <p><strong>Para qué:</strong> solo para contactarte sobre tu solicitud y enviarte un correo de confirmación. No vendemos ni compartimos tus datos con terceros.</p>
+    <p><strong>Dónde:</strong> en una hoja de Google Sheets privada, accesible únicamente por el equipo de Nutrirte.</p>
+    <p><strong>Cómo pedir el borrado:</strong> escribe a espinozaariasnutrifind@gmail.com indicando tu nombre y correo, y eliminaremos tus datos.</p>
+  </section>
 </footer>
 
 <!-- ========== MODAL: FORMULARIO DE SOLICITUD DE REGISTRO ========== -->
@@ -769,10 +795,18 @@
           <textarea id="f-comentario" name="comentario" rows="3" placeholder="Cuéntanos más sobre tu negocio (opcional)"></textarea>
         </div>
 
+        <div class="field">
+          <label for="f-fecha">Fecha deseada del pedido o consulta <span class="req">*</span></label>
+          <input type="date" id="f-fecha" name="fecha_pedido" required>
+        </div>
+
+        <!-- Honeypot anti-spam: campo oculto, solo los bots lo llenan -->
+        <input type="text" name="website" id="f-website" tabindex="-1" autocomplete="off" aria-hidden="true" style="position:absolute;left:-9999px;width:1px;height:1px;opacity:0">
+
         <div class="terms-row">
           <label class="check-row">
             <input type="checkbox" id="f-terminos" name="terminos" required>
-            Acepto los <a href="#" target="_blank">términos</a> y la <a href="#" target="_blank">política de privacidad</a> <span class="req">*</span>
+            Acepto los <a href="#privacidad" onclick="cerrarModal()">términos</a> y la <a href="#privacidad" onclick="cerrarModal()">política de privacidad</a> <span class="req">*</span>
           </label>
         </div>
 
@@ -1025,7 +1059,12 @@ const successView = document.getElementById('success-view');
 const registroForm = document.getElementById('registro-form');
 const formError = document.getElementById('form-error');
 
+function hoyBolivia(){
+  // Fecha de hoy en formato AAAA-MM-DD según la hora de Bolivia
+  return new Date().toLocaleDateString('en-CA', { timeZone: 'America/La_Paz' });
+}
 function abrirModal(){
+  document.getElementById('f-fecha').min = hoyBolivia();
   modalOverlay.classList.add('open');
   formView.style.display = 'block';
   successView.style.display = 'none';
@@ -1053,6 +1092,7 @@ registroForm.addEventListener('submit', async (e) => {
   const direccion = document.getElementById('f-direccion').value.trim();
   const ciudad = document.getElementById('f-ciudad').value;
   const nacimiento = document.getElementById('f-nacimiento').value;
+  const fechaPedido = document.getElementById('f-fecha').value;
 
   const interesArray = Array.from(document.querySelectorAll('input[name="interes"]:checked')).map(i => i.value);
   const interes = interesArray.join(', ');
@@ -1063,7 +1103,8 @@ registroForm.addEventListener('submit', async (e) => {
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
   let valido = true;
-  if (!nombre || !correo || !telefono || !direccion || !ciudad || !nacimiento || !contacto || !terminos) valido = false;
+  if (!nombre || !correo || !telefono || !direccion || !ciudad || !nacimiento || !fechaPedido || !contacto || !terminos) valido = false;
+  if (fechaPedido && fechaPedido < hoyBolivia()) valido = false; // no se aceptan fechas pasadas
   if (!emailRegex.test(correo)) valido = false;
   if (interesArray.length === 0) valido = false;
 
@@ -1078,7 +1119,7 @@ registroForm.addEventListener('submit', async (e) => {
   submitBtn.disabled = true;
   submitBtn.textContent = 'Enviando...';
 
-  // Usar URLSearchParams para asegurar el envio de parametros por POST
+  // Armamos los datos a enviar (formato de formulario clásico)
   const formData = new URLSearchParams();
   formData.append('nombre', nombre);
   formData.append('correo', correo);
@@ -1088,17 +1129,31 @@ registroForm.addEventListener('submit', async (e) => {
   formData.append('nacimiento', nacimiento);
   formData.append('interes', interes);
   formData.append('contacto', contacto.value);
+  formData.append('fecha_pedido', fechaPedido);
   formData.append('comentario', document.getElementById('f-comentario').value.trim());
+  // Honeypot: lo que haya en el campo oculto (una persona real lo deja vacío)
+  formData.append('website', document.getElementById('f-website').value);
 
   try {
-    await fetch(SCRIPT_URL, {
+    // Sin mode:'no-cors': así sí podemos LEER la respuesta real del servidor
+    const res = await fetch(SCRIPT_URL, {
       method: 'POST',
-      mode: 'no-cors',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded'
-      },
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8' },
       body: formData.toString()
     });
+    const data = await res.json();
+
+    // Si el servidor dice que falló, mostramos el error real
+    if (!data.ok) {
+      alert('No se pudo enviar la solicitud: ' + data.mensaje);
+      return;
+    }
+
+    // Se guardó, pero el correo falló: lo avisamos y lo dejamos en consola
+    if (data.correoEnviado === false) {
+      console.warn('Correo no enviado:', data.mensajeCorreo);
+      alert('Tu solicitud se guardó, pero no pudimos enviar el correo de confirmación.');
+    }
 
     registroForm.reset();
     formView.style.display = 'none';
@@ -1106,7 +1161,7 @@ registroForm.addEventListener('submit', async (e) => {
 
   } catch (error) {
     console.error('Error al registrar:', error);
-    alert('Ocurrió un error al enviar la solicitud. Por favor intenta nuevamente.');
+    alert('No pudimos confirmar el envío. Revisa tu conexión e intenta nuevamente.');
   } finally {
     submitBtn.disabled = false;
     submitBtn.textContent = originalText;
