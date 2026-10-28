@@ -9,14 +9,15 @@
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,500;0,9..144,600;1,9..144,400;1,9..144,500&family=Work+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
   :root{
-    --bg:#F5EDFB;
-    --bg-row:#EADCF7;
-    --bg-row-hover:#E0CDF2;
+    /* Fondo verde fresco (lechuga / hoja suave) */
+    --bg:#EAF5DC;
+    --bg-row:#DDEEC8;
+    --bg-row-hover:#CFE5B5;
     --cream:#33502C;
     --accent:#B23FB0;
     --accent-dim:#8E2E8C;
-    --muted:#8A7A9C;
-    --line:rgba(46,36,56,0.13);
+    --muted:#6B7F5E;
+    --line:rgba(51,80,44,0.16);
     --open:#6E8B3D;
     --closed:#9C4F73;
     --violet:#5B8FC9;
@@ -53,67 +54,100 @@
   }
   .header-row{
     display:flex;
-    align-items:baseline;
+    align-items:center;
     justify-content:space-between;
     gap:16px;
     padding-bottom:22px;
     flex-wrap:wrap;
   }
-  .brand{
-    font-family:'Fraunces', serif;
+
+  /* logo Nutrírte (hoja + nombre) */
+  .brand-logo{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    font-family:'Work Sans', sans-serif;
     font-weight:600;
-    font-size:1.5rem;
+    font-size:1.6rem;
     letter-spacing:0.01em;
+    color:var(--cream);
+    line-height:1.1;
   }
-  .brand span{color:var(--violet);}
+  .brand-logo svg{
+    width:28px;
+    height:28px;
+    color:var(--open);
+    flex-shrink:0;
+  }
   .brand-sub{
     font-size:0.85rem;
     color:var(--muted);
-    margin-top:2px;
+    margin-top:4px;
   }
 
-  /* ---------- hero ---------- */
-  .hero{
-    padding:40px 0 24px;
-    text-align:center;
+  /* ---------- hero con imagen a la derecha ---------- */
+  .hero-banner{
+    position:relative;
+    overflow:hidden;
+    min-height:380px;
+    display:flex;
+    align-items:center;
+    background:#A9D071; /* verde de respaldo si la imagen no carga */
   }
-  .hero h1{
+  .hero-img{
+    position:absolute;
+    inset:0;
+    width:100%;
+    height:100%;
+    object-fit:cover;
+    object-position:right center;
+  }
+  .hero-inner{
+    position:relative;
+    z-index:1;
+    width:100%;
+    padding-top:36px;
+    padding-bottom:36px;
+  }
+  .hero-text{
+    max-width:46%;
+    text-align:left;
+  }
+  .hero-text h1{
     font-family:'Fraunces', serif;
     font-weight:500;
-    font-size:clamp(2rem, 5vw, 3.1rem);
+    font-size:clamp(2rem, 4.5vw, 3rem);
     line-height:1.12;
     margin:0 0 12px;
-    max-width:15ch;
-    margin-left:auto;
-    margin-right:auto;
+    color:var(--cream);
   }
-  .hero p{
-    max-width:46ch;
-    margin:0 auto;
-    color:var(--muted);
+  .hero-text p{
+    margin:0;
+    color:var(--cream);
+    opacity:0.85;
     font-size:1.05rem;
   }
-
   .stats{
     display:flex;
-    justify-content:center;
-    gap:36px;
-    margin-top:28px;
+    justify-content:flex-start;
+    gap:28px;
+    margin-top:26px;
     flex-wrap:wrap;
   }
   .stat{
-    text-align:center;
+    text-align:left;
   }
   .stat b{
     display:block;
     font-family:'Fraunces', serif;
     font-weight:500;
     font-size:1.9rem;
-    color:var(--accent);
+    color:var(--cream);
   }
   .stat span{
     font-size:0.8rem;
-    color:var(--muted);
+    color:var(--cream);
+    opacity:0.8;
   }
 
   /* ---------- controls ---------- */
@@ -410,6 +444,33 @@
     text-align:center;
   }
 
+  @media (max-width:640px){
+    /* en celular: el texto arriba y la foto como tarjeta debajo */
+    .hero-banner{
+      display:flex;
+      flex-direction:column;
+      min-height:0;
+      background:transparent;
+      padding-bottom:8px;
+    }
+    .hero-inner{order:1; padding-top:28px; padding-bottom:0;}
+    .hero-text{max-width:100%; text-align:center;}
+    .stats{justify-content:center;}
+    .stat{text-align:center;}
+    .hero-img{
+      order:2;
+      position:static;
+      inset:auto;
+      width:calc(100% - 48px);
+      height:auto;
+      aspect-ratio:765 / 440;
+      margin:22px 24px 0;
+      border-radius:16px;
+      object-position:right center;
+    }
+    .hero-text h1, .hero-text p, .stat b, .stat span{color:var(--cream);}
+  }
+
   @media (max-width:560px){
     .row{
       grid-template-columns:auto 1fr;
@@ -639,20 +700,33 @@
 <header>
   <div class="wrap header-row">
     <div>
-      <div class="brand">B<span>ro</span>te</div>
+      <!-- LOGO NUTRÍRTE (reemplaza al texto "Brote") -->
+      <div class="brand-logo" aria-label="Nutrírte">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M20 4C10 4 4 9 4 15c0 2.5 1.5 5 4 5 6 0 12-5 12-16z"/>
+          <path d="M4 20c2-5 6-9 11-11"/>
+        </svg>
+        <span>Nutrírte</span>
+      </div>
       <div class="brand-sub">Comida saludable en Santa Cruz de la Sierra</div>
     </div>
     <button class="btn-registro" id="btn-abrir-registro">+ Registrarme</button>
   </div>
 </header>
 
-<section class="hero wrap">
-  <h1>Bienvenidos a NUTRIRTE</h1>
-  <p>Encuentra opciones sanas cerca de ti</p>
-  <div class="stats">
-    <div class="stat"><b id="stat-total">0</b><span>lugares</span></div>
-    <div class="stat"><b id="stat-avg">0</b><span>calificación promedio</span></div>
-    <div class="stat"><b id="stat-open">0</b><span>abiertos ahora</span></div>
+<!-- HERO: texto a la izquierda, imagen de frutas y verduras a la derecha -->
+<section class="hero-banner">
+  <img class="hero-img" src="frutas.jpg" alt="Frutas y verduras frescas: naranja, kiwi, palta, brócoli, limón, manzana, apio y bananas sobre fondo verde">
+  <div class="wrap hero-inner">
+    <div class="hero-text">
+      <h1>Bienvenidos a NUTRIRTE</h1>
+      <p>Encuentra opciones sanas cerca de ti</p>
+      <div class="stats">
+        <div class="stat"><b id="stat-total">0</b><span>lugares</span></div>
+        <div class="stat"><b id="stat-avg">0</b><span>calificación promedio</span></div>
+        <div class="stat"><b id="stat-open">0</b><span>abiertos ahora</span></div>
+      </div>
+    </div>
   </div>
 </section>
 
