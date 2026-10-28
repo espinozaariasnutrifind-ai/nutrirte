@@ -489,23 +489,41 @@
     .didactico input{width:100%;}
   }
 
-  /* ---------- imagen fija a la derecha en toda la pantalla ---------- */
-  .side-image{
-    display:none;
+  /* ---------- imagen de fondo (marca de agua) detrás de todo ---------- */
+  .bg-image{
     position:fixed;
-    top:0; right:0; bottom:0;
-    width:38vw;
-    background:#A9D071 url('frutas.jpg') 62% center / cover no-repeat;
-    z-index:0;
+    inset:0;
+    z-index:-1;
+    background:#A9D071 url('frutas.jpg') center / cover no-repeat;
+    /* sin filtros ni opacidad: la foto se ve nítida y con sus colores */
   }
-  @media (min-width:900px){
-    .side-image{display:block;}
-    body{padding-right:38vw;}
-    /* el banner ya no lleva su propia foto: la foto queda fija al costado */
-    .hero-img{display:none;}
-    .hero-banner{min-height:0; background:transparent;}
-    .hero-inner{padding-top:40px; padding-bottom:28px;}
-    .hero-text{max-width:100%;}
+  /* la foto ya no va en el banner: queda como fondo de toda la página */
+  .hero-img{display:none;}
+  .hero-banner{min-height:0; background:transparent;}
+  .hero-inner{padding-top:40px; padding-bottom:28px;}
+  .hero-text{max-width:100%;}
+
+  /* columna de contenido: panel claro semitransparente para que las letras se lean
+     y la foto se vea clara a los lados */
+  header, .hero-banner{border:none;}
+  header{padding:0;}
+  .header-row, .hero-inner, main.wrap, footer.wrap, body > .wrap{
+    background:rgba(234,245,220,0.90);
+  }
+  .header-row{
+    padding:28px 24px 22px;
+    border-bottom:1px solid var(--line);
+  }
+  .hero-inner{padding-left:24px; padding-right:24px;}
+  body > .wrap{padding-top:1px;}
+  footer.wrap{border-top:none;}
+  .controls{border-top:1px solid var(--line);}
+
+  @media (max-width:640px){
+    .header-row, .hero-inner, main.wrap, footer.wrap, body > .wrap{
+      background:rgba(234,245,220,0.86);
+    }
+    .hero-banner{padding-bottom:0;}
   }
 
   @media (prefers-reduced-motion: reduce){
@@ -716,8 +734,8 @@
 </head>
 <body>
 
-<!-- IMAGEN FIJA A LA DERECHA (visible en toda la página al hacer scroll) -->
-<div class="side-image" role="img" aria-label="Frutas y verduras frescas: naranja, kiwi, palta, brócoli, limón, manzana, apio y bananas"></div>
+<!-- IMAGEN DE FONDO (marca de agua nítida detrás del contenido) -->
+<div class="bg-image" role="img" aria-label="Frutas y verduras frescas: naranja, kiwi, palta, brócoli, limón, manzana, apio y bananas"></div>
 
 <header>
   <div class="wrap header-row">
