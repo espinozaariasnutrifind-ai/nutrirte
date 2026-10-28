@@ -489,6 +489,25 @@
     .didactico input{width:100%;}
   }
 
+  /* ---------- imagen fija a la derecha en toda la pantalla ---------- */
+  .side-image{
+    display:none;
+    position:fixed;
+    top:0; right:0; bottom:0;
+    width:38vw;
+    background:#A9D071 url('frutas.jpg') 62% center / cover no-repeat;
+    z-index:0;
+  }
+  @media (min-width:900px){
+    .side-image{display:block;}
+    body{padding-right:38vw;}
+    /* el banner ya no lleva su propia foto: la foto queda fija al costado */
+    .hero-img{display:none;}
+    .hero-banner{min-height:0; background:transparent;}
+    .hero-inner{padding-top:40px; padding-bottom:28px;}
+    .hero-text{max-width:100%;}
+  }
+
   @media (prefers-reduced-motion: reduce){
     *{transition:none !important; scroll-behavior:auto !important;}
   }
@@ -696,6 +715,9 @@
 </style>
 </head>
 <body>
+
+<!-- IMAGEN FIJA A LA DERECHA (visible en toda la página al hacer scroll) -->
+<div class="side-image" role="img" aria-label="Frutas y verduras frescas: naranja, kiwi, palta, brócoli, limón, manzana, apio y bananas"></div>
 
 <header>
   <div class="wrap header-row">
