@@ -1,4 +1,3 @@
-!DOCTYPE html.txt
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -973,6 +972,135 @@ const restaurants = [
 ];
 
 const DAY_NAMES = ["domingo","lunes","martes","miércoles","jueves","viernes","sábado"];
+// ===== FOTOS =====
+const FOTOS = {
+  "Green Lovers": "saludable/greenlovers.jpg",
+  "Smartnutrition": "saludable/smartnutrition.jpg",
+  "Nativo Healthy Food Café": "saludable/nativo-healthy-food-cafe.jpg",
+  "Alma Dulce": "saludable/almadulce.jpg",
+  "Nativo – Healthy Food IC Norte": "saludable/nativo-healthy-food-ic-norte.jpg",
+  "Saludable": "saludable/saludable.jpg",
+  "By Patty Fit": "saludable/by-patty-fit.jpg",
+  "Siipi Irala": "saludable/siipi.jpg"
+};
+restaurants.forEach(r => { r.foto = FOTOS[r.name] || "saludable/saludable.jpg"; });
+
+// ===== GLOBO FLOTANTE CON FOTO =====
+function popupHtml(r, i){
+  return `
+    <div style="width:220px;font-family:'Work Sans',sans-serif">
+      <img src="${r.foto}" alt="${r.name}" onerror="this.onerror=null;this.src='saludable/saludable.jpg'"
+        style="width:100%;height:120px;object-fit:cover;border-radius:8px;margin-bottom:6px">
+      <b style="font-size:15px">${r.name}</b><br>
+      <span style="font-size:12px;color:#555">${r.address}</span><br>
+      <span style="font-size:13px">⭐ ${r.rating.toFixed(1)} · ${r.reviews} reseña${r.reviews===1?'':'s'}</span><br>
+      <button onclick="comoLlegar(${i})" style="margin-top:8px;width:100%;padding:8px;border:none;border-radius:8px;background:#B23FB0;color:#fff;font-weight:600;cursor:pointer">🧭 Cómo llegar</button>
+    </div>`;
+}
+
+// ===== CÓMO LLEGAR + NAVEGACIÓN EN PANTALLA (sin voz) =====
+let rutaLayer = null, rutaCoords = [], navPasos = [], navDest = null, navIdx = 0;
+let navWatch = null, pasoIdx = 1, recalc = false;
+
+function textoPaso(s){
+  const m = s.maneuver, mod = m.modifier || '';
+  const dir = {'left':'a la izquierda','slight left':'ligeramente a la izquierda','sharp left':'cerrado a la izquierda',
+    'right':'a la derecha','slight right':'ligeramente a la derecha','sharp right':'cerrado a la derecha','uturn':'en U'}[mod] || '';
+  const calle = s.name ? ' por ' + s.name : '';
+  if (m.type === 'depart') return 'Sal' + calle;
+  if (m.type === 'arrive') return 'Llegaste a tu destino';
+  if (m.type === 'roundabout' || m.type === 'rotary') return 'Entra a la rotonda y continúa' + calle;
+  return (mod === 'straight' || !dir ? 'Sigue derecho' : 'Gira ' + dir) + calle;
+}
+
+function panelRuta(){
+  let p = document.getElementById('ruta-info');
+  if (!p){
+    p = document.createElement('div');
+    p.id = 'ruta-info';
+    p.style.cssText = 'background:var(--bg-row);border-radius:12px;padding:14px 18px;margin:0 0 16px;font-size:0.9rem';
+    document.getElementById('map').insertAdjacentElement('afterend', p);
+  }
+  return p;
+}
+
+function detenerNav(){
+  if (navWatch !== null){ navigator.geolocation.clearWatch(navWatch); navWatch = null; }
+}
+
+async function comoLlegar(i, auto){
+  const r = restaurants[i];
+  map.closePopup();
+  if (!gpsReady){
+    alert('Primero permite tu ubicación y toca "Actualizar".');
+    return;
+  }
+  detenerNav();
+  navDest = r; navIdx = i;
+  const panel = panelRuta();
+  panel.innerHTML = 'Calculando ruta…';
+  const gmaps = `https://www.google.com/maps/dir/?api=1&origin=${userLat},${userLng}&destination=${r.lat},${r.lng}&travelmode=driving`;
+  try {
+    const url = `https://router.project-osrm.org/route/v1/driving/${userLng},${userLat};${r.lng},${r.lat}?overview=full&geometries=geojson&steps=true`;
+    const data = await (await fetch(url)).json();
+    const ruta = data.routes[0];
+    if (rutaLayer) map.removeLayer(rutaLayer);
+    rutaLayer = L.geoJSON(ruta.geometry, {style:{color:'#2563eb', weight:6}}).addTo(map);
+    rutaCoords = ruta.geometry.coordinates;
+    navPasos = ruta.legs[0].steps;
+    if (!auto) map.fitBounds(rutaLayer.getBounds().pad(0.2));
+    const pasos = navPasos.map(s => `<li>${textoPaso(s)} (${Math.round(s.distance)} m)</li>`).join('');
+    panel.innerHTML = `<b>${r.name}</b> — ${(ruta.distance/1000).toFixed(1)} km · ${Math.round(ruta.duration/60)} min en auto
+      <div id="nav-msg" style="margin:10px 0;font-weight:600;color:var(--accent-dim)"></div>
+      <button onclick="iniciarNav()" style="padding:10px 16px;border:none;border-radius:8px;background:#2563eb;color:#fff;font-weight:600;cursor:pointer">▶ Iniciar navegación</button>
+      <button onclick="detenerNav();document.getElementById('nav-msg').textContent='Navegación detenida'" style="padding:10px 16px;border:1px solid #999;border-radius:8px;background:#fff;cursor:pointer">■ Detener</button>
+      <a href="${gmaps}" target="_blank" rel="noopener" style="margin-left:8px;color:var(--accent);font-weight:600">Abrir en Google Maps →</a>
+      <ol style="margin:10px 0 0;padding-left:20px">${pasos}</ol>`;
+    recalc = false;
+    if (auto) iniciarNav();
+  } catch(e){
+    recalc = false;
+    panel.innerHTML = `No se pudo trazar la ruta aquí. <a href="${gmaps}" target="_blank" rel="noopener" style="color:var(--accent);font-weight:600">Abrir en Google Maps →</a>`;
+  }
+}
+
+function iniciarNav(){
+  if (!navPasos.length) return;
+  detenerNav();
+  pasoIdx = 1;
+  const msg = () => document.getElementById('nav-msg');
+  msg().textContent = 'Navegando…';
+  navWatch = navigator.geolocation.watchPosition(pos => {
+    userLat = pos.coords.latitude; userLng = pos.coords.longitude;
+    if (userMarker) userMarker.setLatLng([userLat, userLng]);
+    map.setView([userLat, userLng], 17);
+
+    // ¿te saliste de la ruta? recalcula
+    const fuera = Math.min(...rutaCoords.map(c => distanceKm(userLat, userLng, c[1], c[0]))) * 1000;
+    if (fuera > 80 && !recalc){
+      recalc = true;
+      msg().textContent = 'Recalculando ruta…';
+      comoLlegar(navIdx, true);
+      return;
+    }
+
+    const s = navPasos[pasoIdx];
+    const loc = s.maneuver.location;
+    const d = distanceKm(userLat, userLng, loc[1], loc[0]) * 1000;
+
+    if (s.maneuver.type === 'arrive' && d < 30){
+      msg().textContent = '🎉 Llegaste a ' + navDest.name;
+      detenerNav();
+      return;
+    }
+    if (d < 25 && pasoIdx < navPasos.length - 1){ pasoIdx++; return; }
+
+    msg().textContent = `En ${Math.round(d)} m: ${textoPaso(s)}`;
+  }, () => { msg().textContent = 'No se pudo seguir tu ubicación'; },
+  { enableHighAccuracy: true, maximumAge: 1000 });
+}
+
+
 
 // ========== GPS SIMULADO ==========
 let userLat = -17.783;   // centro aproximado
@@ -994,9 +1122,9 @@ function initMap() {
     attribution: '© OpenStreetMap'
   }).addTo(map);
 
-  restaurants.forEach(r => {
+  restaurants.forEach((r, i) => {
     const m = L.marker([r.lat, r.lng]).addTo(map)
-      .bindPopup(`<b>${r.name}</b><br>${r.address}<br>⭐ ${r.rating.toFixed(1)}`);
+      .bindPopup(popupHtml(r, i), {maxWidth: 260});
     restaurantMarkers.push(m);
   });
 }
@@ -1153,7 +1281,7 @@ function render(){
             <div class="count">${r.reviews} reseña${r.reviews === 1 ? '' : 's'}</div>
           </div>
           <div class="info">
-            <h2 class="name">${r.name}</h2>
+            <img src="${r.foto}" alt="${r.name}" loading="lazy" style="width:100%;max-width:320px;height:150px;object-fit:cover;border-radius:10px;margin-bottom:8px"><h2 class="name">${r.name}</h2>
             <div class="meta">${r.address} · ${priceLabel}</div>
             <p class="quote">“${r.quote}”</p>
             <div class="details">
@@ -1326,6 +1454,7 @@ registroForm.addEventListener('submit', async (e) => {
     formView.style.display = 'none';
     successView.style.display = 'block';
 
+
   } catch (error) {
     console.error('Error al registrar:', error);
     alert('No pudimos confirmar el envío. Revisa tu conexión e intenta nuevamente.');
@@ -1335,6 +1464,28 @@ registroForm.addEventListener('submit', async (e) => {
   }
 });
 </script>
-
+<style>
+  #btn-ayuda{position:fixed;bottom:20px;right:20px;z-index:9999;background:#33502C;color:#fff;border:none;border-radius:50px;padding:14px 20px;font-size:15px;font-weight:600;box-shadow:0 4px 12px rgba(0,0,0,.3);cursor:pointer}
+  #ayuda-fondo{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:10000;align-items:center;justify-content:center;padding:15px}
+  #ayuda-caja{background:#fff;max-width:520px;width:100%;max-height:85vh;overflow-y:auto;border-radius:14px;padding:22px;color:#222}
+  #ayuda-caja h2{color:#33502C;margin-top:0}
+  #ayuda-caja a.pdf{display:inline-block;background:#B23FB0;color:#fff;padding:10px 16px;border-radius:8px;text-decoration:none;margin:10px 0}
+  #ayuda-cerrar{float:right;border:none;background:none;font-size:26px;cursor:pointer}
+</style>
+<button id="btn-ayuda" onclick="document.getElementById('ayuda-fondo').style.display='flex'">❓ ¿Cómo usar la página?</button>
+<div id="ayuda-fondo" onclick="if(event.target===this)this.style.display='none'">
+  <div id="ayuda-caja">
+    <button id="ayuda-cerrar" onclick="document.getElementById('ayuda-fondo').style.display='none'">×</button>
+    <h2>Cómo usar Nutrírte</h2>
+    <p><b>1. Permite tu ubicación:</b> toca <i>Permitir</i>. Verás un punto azul: ese eres tú. Si no aparece, toca <i>Actualizar</i>.</p>
+    <p><b>2. Busca y filtra:</b> escribe un nombre o zona, pon tu presupuesto (Bs) o activa <i>Abierto ahora</i>.</p>
+    <p><b>3. Mira el mapa:</b> toca un pin para ver la foto, el nombre, la dirección y la calificación.</p>
+    <p><b>4. Cómo llegar:</b> en el globo toca <i>Cómo llegar</i> y se dibuja la ruta con los pasos escritos. Toca <i>Iniciar navegación</i> para que el mapa te siga y te muestre en pantalla la próxima indicación, o <i>Abrir en Google Maps</i> para navegar con voz.</p>
+    <p><b>5. Horarios:</b> pueden cambiar, confirma por teléfono antes de ir.</p>
+    <a class="pdf" href="manual-nutrirte.pdf" target="_blank">📄 Descargar manual completo (PDF)</a>
+    <hr>
+    <p><b>¿Necesitas más ayuda?</b><br>Escríbenos:<br><a href="mailto:espinozaariasnutrifind@gmail.com">espinozaariasnutrifind@gmail.com</a></p>
+  </div>
+</div>
 </body>
 </html>
