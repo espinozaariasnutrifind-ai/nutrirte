@@ -953,6 +953,30 @@
   </div>
 </div>
 
+<style>
+  #btn-ayuda{position:fixed;bottom:20px;right:20px;z-index:9999;background:#33502C;color:#fff;border:none;border-radius:50px;padding:14px 20px;font-size:15px;font-weight:600;box-shadow:0 4px 12px rgba(0,0,0,.3);cursor:pointer}
+  #ayuda-fondo{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:10000;align-items:center;justify-content:center;padding:15px}
+  #ayuda-caja{background:#fff;max-width:520px;width:100%;max-height:85vh;overflow-y:auto;border-radius:14px;padding:22px;color:#222}
+  #ayuda-caja h2{color:#33502C;margin-top:0}
+  #ayuda-caja a.pdf{display:inline-block;background:#B23FB0;color:#fff;padding:10px 16px;border-radius:8px;text-decoration:none;margin:10px 0}
+  #ayuda-cerrar{float:right;border:none;background:none;font-size:26px;cursor:pointer}
+</style>
+<button id="btn-ayuda" onclick="document.getElementById('ayuda-fondo').style.display='flex'">❓ ¿Cómo usar la página?</button>
+<div id="ayuda-fondo" onclick="if(event.target===this)this.style.display='none'">
+  <div id="ayuda-caja">
+    <button id="ayuda-cerrar" onclick="document.getElementById('ayuda-fondo').style.display='none'">×</button>
+    <h2>Cómo usar Nutrírte</h2>
+    <p><b>1. Permite tu ubicación:</b> toca <i>Permitir</i>. Verás un punto azul: ese eres tú. Si no aparece, toca <i>Actualizar</i>.</p>
+    <p><b>2. Busca y filtra:</b> escribe un nombre o zona, pon tu presupuesto (Bs) o activa <i>Abierto ahora</i>.</p>
+    <p><b>3. Mira el mapa:</b> toca un pin para ver la foto, el nombre, la dirección y la calificación.</p>
+    <p><b>4. Cómo llegar:</b> en el globo toca <i>Cómo llegar</i> y se dibuja la ruta con los pasos escritos. Toca <i>Iniciar navegación</i> para que el mapa te siga y te muestre en pantalla la próxima indicación, o <i>Abrir en Google Maps</i> para navegar con voz.</p>
+    <p><b>5. Horarios:</b> pueden cambiar, confirma por teléfono antes de ir.</p>
+    <a class="pdf" href="manual-nutrirte.pdf" target="_blank">📄 Descargar manual completo (PDF)</a>
+    <hr>
+    <p><b>¿Necesitas más ayuda?</b><br>Escríbenos:<br><a href="mailto:espinozaariasnutrifind@gmail.com">espinozaariasnutrifind@gmail.com</a></p>
+  </div>
+</div>
+
 <script>
 const LEAF = '<svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor" style="display:block"><path d="M12 2C7 2 3 6 3 12c0 5 4 9 9 10 0-6 1-10 5-14 1.5-1.5 3-2.5 4-3-3-2-6-3-9-3z"/></svg>';
 
@@ -1281,7 +1305,7 @@ function render(){
             <div class="count">${r.reviews} reseña${r.reviews === 1 ? '' : 's'}</div>
           </div>
           <div class="info">
-            <img src="${r.foto}" alt="${r.name}" loading="lazy" style="width:100%;max-width:320px;height:150px;object-fit:cover;border-radius:10px;margin-bottom:8px"><h2 class="name">${r.name}</h2>
+            <img src="${r.foto}" alt="${r.name}" loading="lazy" onclick="abrirMapa(${restaurants.indexOf(r)})" style="width:100%;max-width:320px;height:150px;object-fit:cover;border-radius:10px;margin-bottom:8px;cursor:pointer;transition:transform 0.2s;" onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'"><h2 class="name">${r.name}</h2>
             <div class="meta">${r.address} · ${priceLabel}</div>
             <p class="quote">“${r.quote}”</p>
             <div class="details">
@@ -1304,6 +1328,15 @@ function render(){
   document.getElementById('stat-open').textContent = restaurants.filter(isOpenNow).length;
 }
 
+function abrirMapa(indice) {
+  const r = restaurants[indice];
+  // Mueve el mapa a las coordenadas del restaurante
+  map.setView([r.lat, r.lng], 16);
+  // Abre el globo de información del marcador correspondiente
+  restaurantMarkers[indice].openPopup();
+  // Hace scroll hacia arriba para que el usuario vea el mapa
+  document.getElementById('map').scrollIntoView({ behavior: 'smooth' });
+}
 // ========== EVENTOS ==========
 document.getElementById('search').addEventListener('input', e => {
   state.search = e.target.value;
@@ -1464,28 +1497,5 @@ registroForm.addEventListener('submit', async (e) => {
   }
 });
 </script>
-<style>
-  #btn-ayuda{position:fixed;bottom:20px;right:20px;z-index:9999;background:#33502C;color:#fff;border:none;border-radius:50px;padding:14px 20px;font-size:15px;font-weight:600;box-shadow:0 4px 12px rgba(0,0,0,.3);cursor:pointer}
-  #ayuda-fondo{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:10000;align-items:center;justify-content:center;padding:15px}
-  #ayuda-caja{background:#fff;max-width:520px;width:100%;max-height:85vh;overflow-y:auto;border-radius:14px;padding:22px;color:#222}
-  #ayuda-caja h2{color:#33502C;margin-top:0}
-  #ayuda-caja a.pdf{display:inline-block;background:#B23FB0;color:#fff;padding:10px 16px;border-radius:8px;text-decoration:none;margin:10px 0}
-  #ayuda-cerrar{float:right;border:none;background:none;font-size:26px;cursor:pointer}
-</style>
-<button id="btn-ayuda" onclick="document.getElementById('ayuda-fondo').style.display='flex'">❓ ¿Cómo usar la página?</button>
-<div id="ayuda-fondo" onclick="if(event.target===this)this.style.display='none'">
-  <div id="ayuda-caja">
-    <button id="ayuda-cerrar" onclick="document.getElementById('ayuda-fondo').style.display='none'">×</button>
-    <h2>Cómo usar Nutrírte</h2>
-    <p><b>1. Permite tu ubicación:</b> toca <i>Permitir</i>. Verás un punto azul: ese eres tú. Si no aparece, toca <i>Actualizar</i>.</p>
-    <p><b>2. Busca y filtra:</b> escribe un nombre o zona, pon tu presupuesto (Bs) o activa <i>Abierto ahora</i>.</p>
-    <p><b>3. Mira el mapa:</b> toca un pin para ver la foto, el nombre, la dirección y la calificación.</p>
-    <p><b>4. Cómo llegar:</b> en el globo toca <i>Cómo llegar</i> y se dibuja la ruta con los pasos escritos. Toca <i>Iniciar navegación</i> para que el mapa te siga y te muestre en pantalla la próxima indicación, o <i>Abrir en Google Maps</i> para navegar con voz.</p>
-    <p><b>5. Horarios:</b> pueden cambiar, confirma por teléfono antes de ir.</p>
-    <a class="pdf" href="manual-nutrirte.pdf" target="_blank">📄 Descargar manual completo (PDF)</a>
-    <hr>
-    <p><b>¿Necesitas más ayuda?</b><br>Escríbenos:<br><a href="mailto:espinozaariasnutrifind@gmail.com">espinozaariasnutrifind@gmail.com</a></p>
-  </div>
-</div>
 </body>
 </html>
