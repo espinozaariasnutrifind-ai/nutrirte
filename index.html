@@ -273,14 +273,16 @@
     color:var(--cream);
   }
   .didactico input{
-    background:var(--bg);
-    border:1px solid var(--line);
+    background:#fff;
+    border:2px solid var(--accent);
     border-radius:8px;
     padding:8px 12px;
     color:var(--cream);
     font-family:'Work Sans', sans-serif;
-    font-size:0.95rem;
+    font-size:1rem;
+    font-weight:600;
     width:130px;
+    text-align:center;
   }
   .didactico input:focus{
     outline:2px solid var(--accent);
@@ -788,8 +790,7 @@
     <div class="label">
       <strong>💰 Tu presupuesto (Bs):</strong>
       <input type="number" id="budget-input" min="0" step="5" value="50" placeholder="Ej. 50">
-      <span class="hint">≈ precio estimado por menú</span>
-    </div>
+<span class="hint">≈ precio estimado por menú (se filtra automáticamente)</span>    </div>
     <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
       <span class="gps-badge" id="gps-badge">
         <svg viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
