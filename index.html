@@ -262,12 +262,14 @@
     align-items:center;
     gap:16px 24px;
   }
-  .didactico .label{
+    .didactico .label{
     font-size:0.9rem;
     color:var(--muted);
     display:flex;
     align-items:center;
+    flex-wrap:wrap; /* Permite que el botón baje si no cabe */
     gap:8px;
+    width: 100%; /* Para que ocupe el ancho necesario */
   }
   .didactico .label strong{
     color:var(--cream);
@@ -787,10 +789,12 @@
 <div class="wrap">
   <!-- CUADRO DIDÁCTICO + CALCULADOR DE PRECIO + GPS -->
   <div class="didactico">
-    <div class="label">
+     <div class="label">
       <strong>💰 Tu presupuesto (Bs):</strong>
       <input type="number" id="budget-input" min="0" step="5" value="50" placeholder="Ej. 50">
-<span class="hint">≈ precio estimado por menú (se filtra automáticamente)</span>    </div>
+<span class="hint">≈ precio estimado por menú</span>
+<button id="btn-buscar-presupuesto" style="background:var(--accent); color:#fff; border:none; padding:8px 16px; border-radius:8px; font-weight:600; cursor:pointer; margin-left:auto;">🔍 Buscar con este presupuesto</button>
+    </div>
     <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
       <span class="gps-badge" id="gps-badge">
         <svg viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
@@ -1496,6 +1500,17 @@ registroForm.addEventListener('submit', async (e) => {
     submitBtn.disabled = false;
     submitBtn.textContent = originalText;
   }
+});
+// ========== NUEVO: BOTÓN DE BUSCAR PRESUPUESTO ==========
+document.getElementById('btn-buscar-presupuesto').addEventListener('click', () => {
+  // 1. Leemos el valor que escribió el usuario
+  const val = parseInt(document.getElementById('budget-input').value) || 0;
+  // 2. Actualizamos el estado y ejecutamos el filtro
+  state.budget = val;
+  render(); 
+  
+  // 3. Hace scroll suave hacia la lista de restaurantes
+  document.getElementById('list').scrollIntoView({ behavior: 'smooth', block: 'start' });
 });
 </script>
 </body>
