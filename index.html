@@ -1269,10 +1269,12 @@ function applyFilters(){
     if (state.price === "2" && r.price !== 2) return false;
     if (state.price === "na" && r.price !== null) return false;
     if (state.openOnly && !isOpenNow(r)) return false;
-    const budget = state.budget || 0;
+        const budget = state.budget || 0;
     if (budget > 0) {
-      if (r.price === 2 && budget < 30) return false;
-      if (r.price === null && budget < 25) return false;
+      // Si el presupuesto es menor a 35, ocultamos los de precio medio ($$)
+      if (r.price === 2 && budget < 35) return false;
+      // Si el presupuesto es menor a 50, ocultamos los que no tienen precio, porque no sabemos si alcanzan
+      if (r.price === null && budget < 50) return false;
     }
     return true;
   });
